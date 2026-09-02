@@ -1,6 +1,9 @@
 package bucket
 
-import "errors"
+import (
+	"bytes"
+	"errors"
+)
 
 var (
 	ErrNotFound = errors.New("key not found")
@@ -15,7 +18,7 @@ func (b *Bucket) Get(key string) ([]byte, error) {
 		return nil, ErrNotFound
 	}
 
-	return ent.value, nil
+	return bytes.Clone(ent.value), nil
 }
 
 func (b *Bucket) Exists(key string) bool {

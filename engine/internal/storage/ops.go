@@ -2,12 +2,20 @@ package storage
 
 func (s *Store) Set(key string, value []byte) {
 	b := s.getBucket(key)
-	b.Set(key, value)
+
+	isNew := b.Set(key, value)
+	if isNew {
+		s.keyCount.Add(1)
+	}
 }
 
 func (s *Store) Delete(key string) {
 	b := s.getBucket(key)
-	b.Delete(key)
+
+	deleted := b.Delete(key)
+	if deleted {
+		s.keyCount.Add(-1)
+	}
 }
 
 func (s *Store) Get(key string) ([]byte, error) {

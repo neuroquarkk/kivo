@@ -2,14 +2,17 @@ package storage
 
 import (
 	"hash/maphash"
+	"sync/atomic"
+
 	"kivo/engine/internal/storage/bucket"
 )
 
 const numBucket = 256
 
 type Store struct {
-	buckets []*bucket.Bucket
-	seed    maphash.Seed
+	buckets  []*bucket.Bucket
+	seed     maphash.Seed
+	keyCount atomic.Int64
 }
 
 func New() *Store {
