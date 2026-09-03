@@ -29,3 +29,7 @@ func (s *Store) Exists(key string) bool {
 	b := s.getBucket(key)
 	return b.Exists(key)
 }
+
+func (s *Store) Count() int64 {
+	return s.keyCount.Load()
+}

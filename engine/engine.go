@@ -55,3 +55,7 @@ func (e *Engine) Exists(key string) (bool, error) {
 	exists := e.store.Exists(key)
 	return exists, nil
 }
+
+func (e *Engine) Count() int64 {
+	return e.store.Count()
+}
