@@ -1,20 +1,27 @@
 package bucket
 
-import "sync"
+import (
+	"sync"
+
+	"kivo/engine/internal/ttl/heap"
+)
 
 type entry struct {
 	value     []byte
 	expiresAt int64
+	item      *heap.Item
 }
 
 type Bucket struct {
-	mu   sync.RWMutex
-	data map[string]entry
+	mu      sync.RWMutex
+	data    map[string]entry
+	ttlHeap *heap.Heap
 }
 
 func New() *Bucket {
 	return &Bucket{
-		data: make(map[string]entry),
+		data:    make(map[string]entry),
+		ttlHeap: heap.New(),
 	}
 }
 

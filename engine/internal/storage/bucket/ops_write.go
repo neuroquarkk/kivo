@@ -9,18 +9,32 @@ func (b *Bucket) Set(key string, value []byte, ttl time.Duration) bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	_, ok := b.data[key]
+	ent, ok := b.data[key]
+
+	hasTTL := ttl > 0
+	tracked := ent.item != nil
 
 	var expiresAt int64
-	if ttl > 0 {
+	if hasTTL {
 		expiresAt = time.Now().Add(ttl).UnixNano()
 	}
 
-	b.data[key] = entry{
-		value:     bytes.Clone(value),
-		expiresAt: expiresAt,
+	switch {
+	case hasTTL && !tracked:
+		// permanent -> expiry (new)
+		ent.item = b.ttlHeap.Push(key, expiresAt)
+	case hasTTL && tracked:
+		// expiry -> expiry (update)
+		b.ttlHeap.Update(ent.item, expiresAt)
+	case !hasTTL && tracked:
+		// expiry -> permanent
+		b.ttlHeap.Remove(ent.item)
+		ent.item = nil
 	}
 
+	ent.value = bytes.Clone(value)
+	ent.expiresAt = expiresAt
+	b.data[key] = ent
 	return !ok
 }
 
@@ -28,8 +42,13 @@ func (b *Bucket) Delete(key string) bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if _, ok := b.data[key]; !ok {
+	ent, ok := b.data[key]
+	if !ok {
 		return false
+	}
+
+	if ent.item != nil {
+		b.ttlHeap.Remove(ent.item)
 	}
 
 	delete(b.data, key)

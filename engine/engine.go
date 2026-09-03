@@ -1,18 +1,20 @@
 package engine
 
 import (
+	"context"
+	"time"
+
 	"kivo/engine/internal/storage"
 	"kivo/engine/internal/validation"
-	"time"
 )
 
 type Engine struct {
 	store *storage.Store
 }
 
-func New() *Engine {
+func New(ctx context.Context) *Engine {
 	return &Engine{
-		store: storage.New(),
+		store: storage.New(ctx),
 	}
 }
 
