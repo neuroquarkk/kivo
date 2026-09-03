@@ -1,9 +1,11 @@
 package storage
 
-func (s *Store) Set(key string, value []byte) {
+import "time"
+
+func (s *Store) Set(key string, value []byte, ttl time.Duration) {
 	b := s.getBucket(key)
 
-	isNew := b.Set(key, value)
+	isNew := b.Set(key, value, ttl)
 	if isNew {
 		s.keyCount.Add(1)
 	}

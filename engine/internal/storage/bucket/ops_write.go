@@ -1,15 +1,24 @@
 package bucket
 
-import "bytes"
+import (
+	"bytes"
+	"time"
+)
 
-func (b *Bucket) Set(key string, value []byte) bool {
+func (b *Bucket) Set(key string, value []byte, ttl time.Duration) bool {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	_, ok := b.data[key]
 
+	var expiresAt int64
+	if ttl > 0 {
+		expiresAt = time.Now().Add(ttl).UnixNano()
+	}
+
 	b.data[key] = entry{
-		value: bytes.Clone(value),
+		value:     bytes.Clone(value),
+		expiresAt: expiresAt,
 	}
 
 	return !ok

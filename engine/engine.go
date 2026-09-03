@@ -3,6 +3,7 @@ package engine
 import (
 	"kivo/engine/internal/storage"
 	"kivo/engine/internal/validation"
+	"time"
 )
 
 type Engine struct {
@@ -15,12 +16,12 @@ func New() *Engine {
 	}
 }
 
-func (e *Engine) Set(key string, value []byte) error {
+func (e *Engine) Set(key string, value []byte, ttl time.Duration) error {
 	if err := validation.ValidateKey(key); err != nil {
 		return err
 	}
 
-	e.store.Set(key, value)
+	e.store.Set(key, value, ttl)
 	return nil
 }
 
