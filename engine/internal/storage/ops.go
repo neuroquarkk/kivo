@@ -7,8 +7,9 @@ func (s *Store) Set(key string, value []byte, ttl time.Duration) {
 
 	isNew := b.Set(key, value, ttl)
 	if isNew {
-		s.keyCount.Add(1)
+		s.stats.keyCount.Add(1)
 	}
+	s.stats.sets.Add(1)
 }
 
 func (s *Store) Delete(key string) {
@@ -16,20 +17,48 @@ func (s *Store) Delete(key string) {
 
 	deleted := b.Delete(key)
 	if deleted {
-		s.keyCount.Add(-1)
+		s.stats.keyCount.Add(-1)
 	}
+	s.stats.deletes.Add(1)
 }
 
 func (s *Store) Get(key string) ([]byte, error) {
 	b := s.getBucket(key)
-	return b.Get(key)
+
+	value, err := b.Get(key)
+	if err != nil {
+		s.stats.misses.Add(1)
+		return nil, err
+	}
+
+	s.stats.hits.Add(1)
+	return value, nil
 }
 
 func (s *Store) Exists(key string) bool {
 	b := s.getBucket(key)
-	return b.Exists(key)
+	exists := b.Exists(key)
+
+	if exists {
+		s.stats.hits.Add(1)
+	} else {
+		s.stats.misses.Add(1)
+	}
+
+	return exists
 }
 
 func (s *Store) Count() int64 {
-	return s.keyCount.Load()
+	return s.stats.keyCount.Load()
+}
+
+func (s *Store) Info() StatsSnapshot {
+	return StatsSnapshot{
+		KeyCount:  s.stats.keyCount.Load(),
+		Sets:      s.stats.sets.Load(),
+		Deletes:   s.stats.deletes.Load(),
+		Hits:      s.stats.hits.Load(),
+		Misses:    s.stats.misses.Load(),
+		Evictions: s.stats.evictions.Load(),
+	}
 }

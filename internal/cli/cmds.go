@@ -76,3 +76,23 @@ func (r *REPL) cmdCount() {
 	count := r.engine.Count()
 	fmt.Println(count)
 }
+
+func (r *REPL) cmdInfo() {
+	info := r.engine.Info()
+
+	fmt.Printf("%-10s %d\n", "keys:", info.KeyCount)
+	fmt.Printf("%-10s %d\n", "sets:", info.Sets)
+	fmt.Printf("%-10s %d\n", "deletes:", info.Deletes)
+	fmt.Printf("%-10s %d\n", "hits:", info.Hits)
+	fmt.Printf("%-10s %d\n", "misses:", info.Misses)
+	fmt.Printf("%-10s %d\n", "evictions:", info.Evictions)
+
+	total := info.Hits + info.Misses
+	if total > 0 {
+		fmt.Printf(
+			"%-10s %.1f%%\n",
+			"hit rate:",
+			float64(info.Hits)/float64(total)*100,
+		)
+	}
+}

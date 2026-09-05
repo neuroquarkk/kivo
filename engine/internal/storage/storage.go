@@ -14,10 +14,28 @@ const (
 	sweepDuration = 1 * time.Minute
 )
 
+type StatsSnapshot struct {
+	KeyCount  int64
+	Sets      int64
+	Deletes   int64
+	Hits      int64
+	Misses    int64
+	Evictions int64
+}
+
+type stats struct {
+	keyCount  atomic.Int64
+	sets      atomic.Int64
+	deletes   atomic.Int64
+	hits      atomic.Int64
+	misses    atomic.Int64
+	evictions atomic.Int64
+}
+
 type Store struct {
-	buckets  []*bucket.Bucket
-	seed     maphash.Seed
-	keyCount atomic.Int64
+	buckets []*bucket.Bucket
+	seed    maphash.Seed
+	stats   stats
 }
 
 func New(ctx context.Context) *Store {
@@ -54,7 +72,8 @@ func (s *Store) startSweeper(ctx context.Context) {
 				now := time.Now().UnixNano()
 				for _, b := range s.buckets {
 					removed := b.SweepExpired(now)
-					s.keyCount.Add(-removed)
+					s.stats.keyCount.Add(-removed)
+					s.stats.evictions.Add(removed)
 				}
 			}
 		}

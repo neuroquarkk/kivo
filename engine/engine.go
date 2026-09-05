@@ -79,3 +79,7 @@ func (e *Engine) Exists(key string) (bool, error) {
 func (e *Engine) Count() int64 {
 	return e.store.Count()
 }
+
+func (e *Engine) Info() storage.StatsSnapshot {
+	return e.store.Info()
+}

@@ -65,6 +65,8 @@ func (r *REPL) dispatch(line string) (exit bool) {
 		r.cmdExists(rest)
 	case "COUNT":
 		r.cmdCount()
+	case "INFO":
+		r.cmdInfo()
 	case "HELP":
 		printHelp()
 	case "EXIT", "QUIT":
@@ -83,6 +85,7 @@ func printHelp() {
   DELETE <key>           	remove a key
   EXISTS <key>              check whether a key exists
   COUNT                     get the total number of keys
+  INFO                      show store statistics (keys, hits, misses, etc)
   HELP                      show this message
   EXIT|QUIT                 leave the REPL`,
 	)
