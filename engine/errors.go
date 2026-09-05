@@ -6,6 +6,8 @@ import (
 )
 
 var (
-	ErrEmptyKey = validation.ErrEmptyKey
-	ErrNotFound = bucket.ErrNotFound
+	ErrEmptyKey      = validation.ErrEmptyKey
+	ErrKeyTooLarge   = validation.ErrKeyTooLarge
+	ErrValueTooLarge = validation.ErrValueTooLarge
+	ErrNotFound      = bucket.ErrNotFound
 )
