@@ -23,7 +23,7 @@ func New(ctx context.Context, opts *Opts) (*Engine, error) {
 	}
 
 	e := &Engine{}
-	e.store = storage.New(ctx)
+	e.store = storage.New(ctx, opts.limitBytes)
 	e.opts = opts
 
 	return e, nil

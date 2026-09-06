@@ -80,19 +80,23 @@ func (r *REPL) cmdCount() {
 func (r *REPL) cmdInfo() {
 	info := r.engine.Info()
 
-	fmt.Printf("%-10s %d\n", "keys:", info.KeyCount)
-	fmt.Printf("%-10s %d\n", "sets:", info.Sets)
-	fmt.Printf("%-10s %d\n", "deletes:", info.Deletes)
-	fmt.Printf("%-10s %d\n", "hits:", info.Hits)
-	fmt.Printf("%-10s %d\n", "misses:", info.Misses)
-	fmt.Printf("%-10s %d\n", "evictions:", info.Evictions)
+	printStat := func(name string, value any) {
+		fmt.Printf("%-20s %v\n", name+":", value)
+	}
+
+	printStat("keys", info.KeyCount)
+	printStat("sets", info.Sets)
+	printStat("deletes", info.Deletes)
+	printStat("hits", info.Hits)
+	printStat("misses", info.Misses)
+	printStat("evictions", info.Evictions)
+	printStat("memory", info.MemLimit)
+	printStat("memory per bucket", info.MemPerBucket)
 
 	total := info.Hits + info.Misses
 	if total > 0 {
-		fmt.Printf(
-			"%-10s %.1f%%\n",
-			"hit rate:",
+		printStat("hit rate", fmt.Sprintf("%.1f%%",
 			float64(info.Hits)/float64(total)*100,
-		)
+		))
 	}
 }

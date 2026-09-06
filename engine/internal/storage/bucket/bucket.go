@@ -13,15 +13,18 @@ type entry struct {
 }
 
 type Bucket struct {
-	mu      sync.RWMutex
-	data    map[string]entry
-	ttlHeap *heap.Heap
+	mu          sync.RWMutex
+	data        map[string]entry
+	ttlHeap     *heap.Heap
+	maxSize     int64
+	currentSize int64
 }
 
-func New() *Bucket {
+func New(maxSize int64) *Bucket {
 	return &Bucket{
 		data:    make(map[string]entry),
 		ttlHeap: heap.New(),
+		maxSize: maxSize,
 	}
 }
 

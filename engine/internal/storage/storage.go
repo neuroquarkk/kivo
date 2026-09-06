@@ -15,12 +15,14 @@ const (
 )
 
 type StatsSnapshot struct {
-	KeyCount  int64
-	Sets      int64
-	Deletes   int64
-	Hits      int64
-	Misses    int64
-	Evictions int64
+	KeyCount     int64
+	Sets         int64
+	Deletes      int64
+	Hits         int64
+	Misses       int64
+	Evictions    int64
+	MemLimit     int64
+	MemPerBucket int64
 }
 
 type stats struct {
@@ -33,20 +35,23 @@ type stats struct {
 }
 
 type Store struct {
-	buckets []*bucket.Bucket
-	seed    maphash.Seed
-	stats   stats
+	buckets  []*bucket.Bucket
+	seed     maphash.Seed
+	stats    stats
+	memLimit int64
 }
 
-func New(ctx context.Context) *Store {
+func New(ctx context.Context, memLimit int64) *Store {
+	perBucketLimit := memLimit / int64(numBucket)
 	buckets := make([]*bucket.Bucket, numBucket)
 	for i := range numBucket {
-		buckets[i] = bucket.New()
+		buckets[i] = bucket.New(perBucketLimit)
 	}
 
 	s := &Store{
-		buckets: buckets,
-		seed:    maphash.MakeSeed(),
+		buckets:  buckets,
+		seed:     maphash.MakeSeed(),
+		memLimit: memLimit,
 	}
 
 	s.startSweeper(ctx)

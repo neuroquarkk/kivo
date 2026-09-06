@@ -54,11 +54,13 @@ func (s *Store) Count() int64 {
 
 func (s *Store) Info() StatsSnapshot {
 	return StatsSnapshot{
-		KeyCount:  s.stats.keyCount.Load(),
-		Sets:      s.stats.sets.Load(),
-		Deletes:   s.stats.deletes.Load(),
-		Hits:      s.stats.hits.Load(),
-		Misses:    s.stats.misses.Load(),
-		Evictions: s.stats.evictions.Load(),
+		KeyCount:     s.stats.keyCount.Load(),
+		Sets:         s.stats.sets.Load(),
+		Deletes:      s.stats.deletes.Load(),
+		Hits:         s.stats.hits.Load(),
+		Misses:       s.stats.misses.Load(),
+		Evictions:    s.stats.evictions.Load(),
+		MemLimit:     s.memLimit,
+		MemPerBucket: s.memLimit / int64(len(s.buckets)),
 	}
 }
