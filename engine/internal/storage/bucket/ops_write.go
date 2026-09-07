@@ -5,13 +5,15 @@ import (
 	"time"
 )
 
-func (b *Bucket) Set(key string, value []byte, ttl time.Duration) bool {
+func (b *Bucket) Set(key string, value []byte, ttl time.Duration) (bool, int) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	ent, ok := b.data[key]
 	if !ok {
-		ent = &entry{}
+		ent = &entry{
+			createdAt: time.Now().UnixNano(),
+		}
 		b.data[key] = ent
 	}
 
@@ -36,8 +38,9 @@ func (b *Bucket) Set(key string, value []byte, ttl time.Duration) bool {
 		ent.item = nil
 	}
 
+	removed := 0
 	if float64(b.currentSize) >= float64(b.maxSize)*evictionThresholdRatio {
-		b.evictKeys(key)
+		removed = b.evictKeys(key)
 	}
 
 	ent.value = bytes.Clone(value)
@@ -53,7 +56,7 @@ func (b *Bucket) Set(key string, value []byte, ttl time.Duration) bool {
 		b.currentSize -= oldVLen
 		b.currentSize += vLen
 	}
-	return !ok
+	return !ok, removed
 }
 
 func (b *Bucket) Delete(key string) bool {

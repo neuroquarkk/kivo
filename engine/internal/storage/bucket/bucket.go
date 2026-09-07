@@ -3,6 +3,7 @@ package bucket
 import (
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"kivo/engine/internal/ttl/heap"
 )
@@ -10,6 +11,8 @@ import (
 const (
 	evictionThresholdRatio = 0.99
 	evictionTargetRatio    = 0.95
+	evictionSampleSize     = 5
+	evictionGracePeriod    = 1500 * time.Millisecond
 )
 
 type entry struct {
@@ -17,6 +20,7 @@ type entry struct {
 	expiresAt int64
 	item      *heap.Item
 	feq       atomic.Uint32
+	createdAt int64
 }
 
 type Bucket struct {

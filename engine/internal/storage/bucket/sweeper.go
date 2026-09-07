@@ -1,6 +1,9 @@
 package bucket
 
-import "math"
+import (
+	"math"
+	"time"
+)
 
 func (b *Bucket) SweepExpired(now int64) int64 {
 	b.mu.Lock()
@@ -25,9 +28,11 @@ func (b *Bucket) SweepExpired(now int64) int64 {
 	return removed
 }
 
-func (b *Bucket) evictKeys(ignoreKey string) {
+func (b *Bucket) evictKeys(ignoreKey string) int {
 	targetSize := int64(float64(b.maxSize) * evictionTargetRatio)
+	now := time.Now().UnixNano()
 
+	var evictedCount int
 	for b.currentSize > targetSize {
 		var lowestKey string
 		var lowestFeq uint32 = math.MaxUint32
@@ -38,13 +43,17 @@ func (b *Bucket) evictKeys(ignoreKey string) {
 				continue
 			}
 
+			if now-e.createdAt < int64(evictionGracePeriod) {
+				continue
+			}
+
 			feq := e.feq.Load()
 			if feq < lowestFeq {
 				lowestFeq = feq
 				lowestKey = k
 			}
 			sampled++
-			if sampled >= 5 {
+			if sampled >= evictionSampleSize {
 				break
 			}
 		}
@@ -61,5 +70,8 @@ func (b *Bucket) evictKeys(ignoreKey string) {
 		delete(b.data, lowestKey)
 		b.currentSize -= int64(len(lowestKey))
 		b.currentSize -= int64(len(ent.value))
+		evictedCount++
 	}
+
+	return evictedCount
 }

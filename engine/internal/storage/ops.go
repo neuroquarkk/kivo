@@ -5,11 +5,15 @@ import "time"
 func (s *Store) Set(key string, value []byte, ttl time.Duration) {
 	b := s.getBucket(key)
 
-	isNew := b.Set(key, value, ttl)
+	isNew, removed := b.Set(key, value, ttl)
 	if isNew {
 		s.stats.keyCount.Add(1)
 	}
 	s.stats.sets.Add(1)
+	if removed > 0 {
+		s.stats.keyCount.Add(-int64(removed))
+		s.stats.evictions.Add(int64(removed))
+	}
 }
 
 func (s *Store) Delete(key string) {
