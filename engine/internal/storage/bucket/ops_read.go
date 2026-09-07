@@ -24,6 +24,7 @@ func (b *Bucket) Get(key string) ([]byte, error) {
 		return nil, ErrNotFound
 	}
 
+	ent.feq.Add(1)
 	return bytes.Clone(ent.value), nil
 }
 
@@ -41,5 +42,6 @@ func (b *Bucket) Exists(key string) bool {
 		return false
 	}
 
+	ent.feq.Add(1)
 	return true
 }

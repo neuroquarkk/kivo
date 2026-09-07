@@ -10,6 +10,10 @@ func (b *Bucket) Set(key string, value []byte, ttl time.Duration) bool {
 	defer b.mu.Unlock()
 
 	ent, ok := b.data[key]
+	if !ok {
+		ent = &entry{}
+		b.data[key] = ent
+	}
 
 	hasTTL := ttl > 0
 	tracked := ent.item != nil
@@ -32,9 +36,12 @@ func (b *Bucket) Set(key string, value []byte, ttl time.Duration) bool {
 		ent.item = nil
 	}
 
+	if float64(b.currentSize) >= float64(b.maxSize)*evictionThresholdRatio {
+		b.evictKeys(key)
+	}
+
 	ent.value = bytes.Clone(value)
 	ent.expiresAt = expiresAt
-	b.data[key] = ent
 
 	kLen := int64(len(key))
 	vLen := int64(len(value))

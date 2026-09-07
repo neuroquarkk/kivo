@@ -2,19 +2,26 @@ package bucket
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"kivo/engine/internal/ttl/heap"
+)
+
+const (
+	evictionThresholdRatio = 0.99
+	evictionTargetRatio    = 0.95
 )
 
 type entry struct {
 	value     []byte
 	expiresAt int64
 	item      *heap.Item
+	feq       atomic.Uint32
 }
 
 type Bucket struct {
 	mu          sync.RWMutex
-	data        map[string]entry
+	data        map[string]*entry
 	ttlHeap     *heap.Heap
 	maxSize     int64
 	currentSize int64
@@ -22,12 +29,12 @@ type Bucket struct {
 
 func New(maxSize int64) *Bucket {
 	return &Bucket{
-		data:    make(map[string]entry),
+		data:    make(map[string]*entry),
 		ttlHeap: heap.New(),
 		maxSize: maxSize,
 	}
 }
 
-func (e entry) isExpired(now int64) bool {
+func (e *entry) isExpired(now int64) bool {
 	return e.expiresAt != 0 && now > e.expiresAt
 }
