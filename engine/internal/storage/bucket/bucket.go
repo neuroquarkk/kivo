@@ -8,12 +8,13 @@ import (
 	"kivo/engine/internal/ttl/heap"
 )
 
-const (
-	evictionThresholdRatio = 0.99
-	evictionTargetRatio    = 0.95
-	evictionSampleSize     = 5
-	evictionGracePeriod    = 1500 * time.Millisecond
-)
+type Config struct {
+	MaxSize        int64
+	ThresholdRatio float64
+	TargetRatio    float64
+	SampleSize     int
+	GracePeriod    time.Duration
+}
 
 type entry struct {
 	value     []byte
@@ -27,15 +28,15 @@ type Bucket struct {
 	mu          sync.RWMutex
 	data        map[string]*entry
 	ttlHeap     *heap.Heap
-	maxSize     int64
+	cfg         Config
 	currentSize int64
 }
 
-func New(maxSize int64) *Bucket {
+func New(cfg Config) *Bucket {
 	return &Bucket{
 		data:    make(map[string]*entry),
 		ttlHeap: heap.New(),
-		maxSize: maxSize,
+		cfg:     cfg,
 	}
 }
 

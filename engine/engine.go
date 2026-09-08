@@ -18,12 +18,19 @@ func New(ctx context.Context, opts *Opts) (*Engine, error) {
 		opts = &Opts{}
 	}
 
-	if err := opts.prepare(); err != nil {
+	iOpts, err := opts.prepare()
+	if err != nil {
 		return nil, err
 	}
 
 	e := &Engine{}
-	e.store = storage.New(ctx, opts.limitBytes)
+	e.store = storage.New(ctx, storage.Config{
+		MemLimit:       iOpts.limitBytes,
+		ThresholdRatio: iOpts.thresholdRatio,
+		TargetRatio:    iOpts.targetRatio,
+		SampleSize:     iOpts.sampleSize,
+		GracePeriod:    iOpts.gracePeriod,
+	})
 	e.opts = opts
 
 	return e, nil

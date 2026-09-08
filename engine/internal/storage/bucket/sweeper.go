@@ -29,7 +29,7 @@ func (b *Bucket) SweepExpired(now int64) int64 {
 }
 
 func (b *Bucket) evictKeys(ignoreKey string) int {
-	targetSize := int64(float64(b.maxSize) * evictionTargetRatio)
+	targetSize := int64(float64(b.cfg.MaxSize) * b.cfg.TargetRatio)
 	now := time.Now().UnixNano()
 
 	var evictedCount int
@@ -43,7 +43,7 @@ func (b *Bucket) evictKeys(ignoreKey string) int {
 				continue
 			}
 
-			if now-e.createdAt < int64(evictionGracePeriod) {
+			if now-e.createdAt < int64(b.cfg.GracePeriod) {
 				continue
 			}
 
@@ -53,7 +53,7 @@ func (b *Bucket) evictKeys(ignoreKey string) int {
 				lowestKey = k
 			}
 			sampled++
-			if sampled >= evictionSampleSize {
+			if sampled >= b.cfg.SampleSize {
 				break
 			}
 		}

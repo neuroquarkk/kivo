@@ -39,7 +39,7 @@ func (b *Bucket) Set(key string, value []byte, ttl time.Duration) (bool, int) {
 	}
 
 	removed := 0
-	if float64(b.currentSize) >= float64(b.maxSize)*evictionThresholdRatio {
+	if float64(b.currentSize) >= float64(b.cfg.MaxSize)*b.cfg.ThresholdRatio {
 		removed = b.evictKeys(key)
 	}
 
