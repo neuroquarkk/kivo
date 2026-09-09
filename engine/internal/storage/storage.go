@@ -12,6 +12,7 @@ import (
 const (
 	numBucket     = 256
 	sweepDuration = 1 * time.Minute
+	decayDuration = 10 * time.Minute
 )
 
 type Config struct {
@@ -80,20 +81,27 @@ func (s *Store) getBucket(key string) *bucket.Bucket {
 }
 
 func (s *Store) startSweeper(ctx context.Context) {
+	// expiry sweeper
 	go func() {
-		ticker := time.NewTicker(sweepDuration)
-		defer ticker.Stop()
+		sweepTicker := time.NewTicker(sweepDuration)
+		decayTicker := time.NewTicker(decayDuration)
+		defer sweepTicker.Stop()
+		defer decayTicker.Stop()
 
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case <-ticker.C:
+			case <-sweepTicker.C:
 				now := time.Now().UnixNano()
 				for _, b := range s.buckets {
 					removed := b.SweepExpired(now)
 					s.stats.keyCount.Add(-removed)
 					s.stats.evictions.Add(removed)
+				}
+			case <-decayTicker.C:
+				for _, b := range s.buckets {
+					b.Decay()
 				}
 			}
 		}

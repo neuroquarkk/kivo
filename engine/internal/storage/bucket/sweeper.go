@@ -1,8 +1,9 @@
 package bucket
 
-import (
-	"math"
-	"time"
+import "math"
+
+const (
+	decayFactor = 0.5
 )
 
 func (b *Bucket) SweepExpired(now int64) int64 {
@@ -27,29 +28,39 @@ func (b *Bucket) SweepExpired(now int64) int64 {
 	return removed
 }
 
-func (b *Bucket) evictKeys(ignoreKey string, delta int64) int {
-	now := time.Now().UnixNano()
+func (b *Bucket) evictKeys(ignoreKey string, delta, now int64) int {
+	graceCutoff := now - int64(b.cfg.GracePeriod)
+	maxInspect := b.cfg.SampleSize * 5
 
 	var evictedCount int
+
 	for (b.currentSize + delta) > b.targetBytes {
-		var lowestKey string
-		var lowestFeq uint32 = math.MaxUint32
-		var sampled int
+		var (
+			lowestKey string
+			lowestFeq uint32 = math.MaxUint32
+			sampled   int
+			visited   int
+		)
 
-		for k, e := range b.data {
-			if k == ignoreKey {
+		for key, ent := range b.data {
+			if key == ignoreKey {
 				continue
 			}
 
-			if now-e.createdAt < int64(b.cfg.GracePeriod) {
+			visited++
+			if visited > maxInspect {
+				break
+			}
+
+			if ent.createdAt > graceCutoff {
 				continue
 			}
 
-			feq := e.feq.Load()
-			if feq < lowestFeq {
+			if feq := ent.feq.Load(); feq < lowestFeq {
 				lowestFeq = feq
-				lowestKey = k
+				lowestKey = key
 			}
+
 			sampled++
 			if sampled >= b.cfg.SampleSize {
 				break
@@ -71,4 +82,15 @@ func (b *Bucket) evictKeys(ignoreKey string, delta int64) int {
 	}
 
 	return evictedCount
+}
+
+func (b *Bucket) Decay() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	for _, ent := range b.data {
+		feq := ent.feq.Load()
+		decayed := float64(feq) * decayFactor
+		ent.feq.Store(uint32(decayed))
+	}
 }

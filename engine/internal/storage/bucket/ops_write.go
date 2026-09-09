@@ -22,7 +22,7 @@ func (b *Bucket) Set(key string, value []byte, ttl time.Duration) (bool, int) {
 
 	var removed int
 	if b.currentSize+delta >= b.thresholdBytes {
-		removed = b.evictKeys(key, delta)
+		removed = b.evictKeys(key, delta, now)
 	}
 
 	if isNew {
