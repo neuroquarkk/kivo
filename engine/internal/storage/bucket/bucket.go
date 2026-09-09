@@ -43,3 +43,7 @@ func New(cfg Config) *Bucket {
 func (e *entry) isExpired(now int64) bool {
 	return e.expiresAt != 0 && now > e.expiresAt
 }
+
+func entrySize(key string, val []byte) int64 {
+	return int64(len(key) + len(val))
+}

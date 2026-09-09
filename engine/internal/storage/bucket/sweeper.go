@@ -12,15 +12,14 @@ func (b *Bucket) SweepExpired(now int64) int64 {
 	var removed int64
 	for {
 		item := b.ttlHeap.Peek()
-		if item == nil {
-			break
-		}
-
-		if now < item.ExpiresAt {
+		if item == nil || now < item.ExpiresAt {
 			break
 		}
 
 		b.ttlHeap.Pop()
+
+		ent := b.data[item.Key]
+		b.currentSize -= entrySize(item.Key, ent.value)
 		delete(b.data, item.Key)
 		removed++
 	}
@@ -68,8 +67,7 @@ func (b *Bucket) evictKeys(ignoreKey string) int {
 		}
 
 		delete(b.data, lowestKey)
-		b.currentSize -= int64(len(lowestKey))
-		b.currentSize -= int64(len(ent.value))
+		b.currentSize -= entrySize(lowestKey, ent.value)
 		evictedCount++
 	}
 

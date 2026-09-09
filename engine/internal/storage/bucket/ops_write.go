@@ -43,19 +43,17 @@ func (b *Bucket) Set(key string, value []byte, ttl time.Duration) (bool, int) {
 		removed = b.evictKeys(key)
 	}
 
-	ent.value = bytes.Clone(value)
-	ent.expiresAt = expiresAt
-
-	kLen := int64(len(key))
-	vLen := int64(len(value))
-
 	if !ok {
-		b.currentSize += kLen + vLen
+		b.currentSize += entrySize(key, value)
 	} else {
 		oldVLen := int64(len(ent.value))
 		b.currentSize -= oldVLen
-		b.currentSize += vLen
+		b.currentSize += int64(len(value))
 	}
+
+	ent.value = bytes.Clone(value)
+	ent.expiresAt = expiresAt
+
 	return !ok, removed
 }
 
@@ -73,8 +71,6 @@ func (b *Bucket) Delete(key string) bool {
 	}
 
 	delete(b.data, key)
-
-	b.currentSize -= int64(len(key))
-	b.currentSize -= int64(len(ent.value))
+	b.currentSize -= entrySize(key, ent.value)
 	return true
 }
