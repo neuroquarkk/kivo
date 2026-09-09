@@ -27,12 +27,11 @@ func (b *Bucket) SweepExpired(now int64) int64 {
 	return removed
 }
 
-func (b *Bucket) evictKeys(ignoreKey string) int {
-	targetSize := int64(float64(b.cfg.MaxSize) * b.cfg.TargetRatio)
+func (b *Bucket) evictKeys(ignoreKey string, delta int64) int {
 	now := time.Now().UnixNano()
 
 	var evictedCount int
-	for b.currentSize > targetSize {
+	for (b.currentSize + delta) > b.targetBytes {
 		var lowestKey string
 		var lowestFeq uint32 = math.MaxUint32
 		var sampled int

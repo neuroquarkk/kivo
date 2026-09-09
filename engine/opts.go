@@ -56,6 +56,8 @@ type internalOpts struct {
 
 func DefaultOpts() *Opts {
 	return &Opts{
+		MaxKeySize:             256,
+		MaxValueSize:           512 * 1024,
 		MemoryLimitMB:          0,
 		EvictionThresholdRatio: 0.99,
 		EvictionTargetRatio:    0.95,

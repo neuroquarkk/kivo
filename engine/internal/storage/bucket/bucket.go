@@ -25,18 +25,22 @@ type entry struct {
 }
 
 type Bucket struct {
-	mu          sync.RWMutex
-	data        map[string]*entry
-	ttlHeap     *heap.Heap
-	cfg         Config
-	currentSize int64
+	mu             sync.RWMutex
+	data           map[string]*entry
+	ttlHeap        *heap.Heap
+	cfg            Config
+	currentSize    int64
+	thresholdBytes int64
+	targetBytes    int64
 }
 
 func New(cfg Config) *Bucket {
 	return &Bucket{
-		data:    make(map[string]*entry),
-		ttlHeap: heap.New(),
-		cfg:     cfg,
+		data:           make(map[string]*entry),
+		ttlHeap:        heap.New(),
+		cfg:            cfg,
+		thresholdBytes: int64(float64(cfg.MaxSize) * cfg.ThresholdRatio),
+		targetBytes:    int64(float64(cfg.MaxSize) * cfg.TargetRatio),
 	}
 }
 
