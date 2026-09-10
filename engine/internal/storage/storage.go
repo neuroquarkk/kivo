@@ -13,15 +13,12 @@ const (
 	numBucket     = 256
 	sweepDuration = 1 * time.Minute
 	decayDuration = 10 * time.Minute
-)
 
-type Config struct {
-	MemLimit       int64
-	ThresholdRatio float64
-	TargetRatio    float64
-	SampleSize     int
-	GracePeriod    time.Duration
-}
+	thresholdRatio = 0.99
+	targetRatio    = 0.95
+	sampleSize     = 5
+	gracePeriod    = 1500 * time.Millisecond
+)
 
 type StatsSnapshot struct {
 	KeyCount     int64
@@ -50,14 +47,14 @@ type Store struct {
 	memLimit int64
 }
 
-func New(ctx context.Context, cfg Config) *Store {
-	perBucketLimit := cfg.MemLimit / int64(numBucket)
+func New(ctx context.Context, memLimit int64) *Store {
+	perBucketLimit := memLimit / int64(numBucket)
 
 	bCfg := bucket.Config{
-		ThresholdBytes: int64(float64(perBucketLimit) * cfg.ThresholdRatio),
-		TargetBytes:    int64(float64(perBucketLimit) * cfg.TargetRatio),
-		SampleSize:     cfg.SampleSize,
-		GracePeriod:    int64(cfg.GracePeriod),
+		ThresholdBytes: int64(float64(perBucketLimit) * thresholdRatio),
+		TargetBytes:    int64(float64(perBucketLimit) * targetRatio),
+		SampleSize:     sampleSize,
+		GracePeriod:    int64(gracePeriod),
 	}
 
 	buckets := make([]*bucket.Bucket, numBucket)
@@ -68,7 +65,7 @@ func New(ctx context.Context, cfg Config) *Store {
 	s := &Store{
 		buckets:  buckets,
 		seed:     maphash.MakeSeed(),
-		memLimit: cfg.MemLimit,
+		memLimit: memLimit,
 	}
 
 	s.startSweeper(ctx)

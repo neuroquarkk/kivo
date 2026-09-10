@@ -10,7 +10,7 @@ import (
 
 type Engine struct {
 	store *storage.Store
-	opts  *Opts
+	opts  internalOpts
 }
 
 func New(ctx context.Context, opts *Opts) (*Engine, error) {
@@ -24,28 +24,22 @@ func New(ctx context.Context, opts *Opts) (*Engine, error) {
 	}
 
 	e := &Engine{}
-	e.store = storage.New(ctx, storage.Config{
-		MemLimit:       iOpts.limitBytes,
-		ThresholdRatio: iOpts.thresholdRatio,
-		TargetRatio:    iOpts.targetRatio,
-		SampleSize:     iOpts.sampleSize,
-		GracePeriod:    iOpts.gracePeriod,
-	})
-	e.opts = opts
+	e.store = storage.New(ctx, iOpts.limitBytes)
+	e.opts = iOpts
 
 	return e, nil
 }
 
 func (e *Engine) Set(key string, value []byte, ttl time.Duration) error {
-	if err := validation.CheckKey(key, e.opts.MaxKeySize); err != nil {
+	if err := validation.CheckKey(key, DefaultMaxKeySize); err != nil {
 		return err
 	}
-	if err := validation.CheckValue(value, e.opts.MaxValueSize); err != nil {
+	if err := validation.CheckValue(value, DefaultMaxValueSize); err != nil {
 		return err
 	}
 
 	if ttl == 0 {
-		ttl = e.opts.DefaultTTL
+		ttl = e.opts.defaultTTL
 	}
 
 	e.store.Set(key, value, ttl)
@@ -53,7 +47,7 @@ func (e *Engine) Set(key string, value []byte, ttl time.Duration) error {
 }
 
 func (e *Engine) Delete(key string) error {
-	if err := validation.CheckKey(key, e.opts.MaxKeySize); err != nil {
+	if err := validation.CheckKey(key, DefaultMaxKeySize); err != nil {
 		return err
 	}
 
@@ -62,7 +56,7 @@ func (e *Engine) Delete(key string) error {
 }
 
 func (e *Engine) Get(key string) ([]byte, error) {
-	if err := validation.CheckKey(key, e.opts.MaxKeySize); err != nil {
+	if err := validation.CheckKey(key, DefaultMaxKeySize); err != nil {
 		return nil, err
 	}
 
@@ -75,7 +69,7 @@ func (e *Engine) Get(key string) ([]byte, error) {
 }
 
 func (e *Engine) Exists(key string) (bool, error) {
-	if err := validation.CheckKey(key, e.opts.MaxKeySize); err != nil {
+	if err := validation.CheckKey(key, DefaultMaxKeySize); err != nil {
 		return false, err
 	}
 

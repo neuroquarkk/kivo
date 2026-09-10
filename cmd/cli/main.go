@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"kivo/engine"
 	"kivo/internal/cli"
-	"os"
 )
 
 func main() {
 	ctx := context.Background()
 
-	opts := &engine.Opts{}
+	opts := engine.DefaultOpts()
 	e, err := engine.New(ctx, opts)
 	if err != nil {
 		fmt.Println("error creating engine:", err)
