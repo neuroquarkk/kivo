@@ -29,8 +29,8 @@ func (b *Bucket) SweepExpired(now int64) int64 {
 }
 
 func (b *Bucket) evictKeys(ignoreKey string, delta, now int64) int {
-	graceCutoff := now - int64(b.cfg.GracePeriod)
-	maxInspect := b.cfg.SampleSize * 5
+	graceCutoff := now - int64(b.gracePeriod)
+	maxInspect := b.sampleSize * 5
 
 	var evictedCount int
 
@@ -62,7 +62,7 @@ func (b *Bucket) evictKeys(ignoreKey string, delta, now int64) int {
 			}
 
 			sampled++
-			if sampled >= b.cfg.SampleSize {
+			if sampled >= b.sampleSize {
 				break
 			}
 		}

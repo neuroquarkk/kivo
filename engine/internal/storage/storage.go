@@ -53,15 +53,16 @@ type Store struct {
 func New(ctx context.Context, cfg Config) *Store {
 	perBucketLimit := cfg.MemLimit / int64(numBucket)
 
+	bCfg := bucket.Config{
+		ThresholdBytes: int64(float64(perBucketLimit) * cfg.ThresholdRatio),
+		TargetBytes:    int64(float64(perBucketLimit) * cfg.TargetRatio),
+		SampleSize:     cfg.SampleSize,
+		GracePeriod:    int64(cfg.GracePeriod),
+	}
+
 	buckets := make([]*bucket.Bucket, numBucket)
 	for i := range numBucket {
-		buckets[i] = bucket.New(bucket.Config{
-			MaxSize:        perBucketLimit,
-			ThresholdRatio: cfg.ThresholdRatio,
-			TargetRatio:    cfg.TargetRatio,
-			SampleSize:     cfg.SampleSize,
-			GracePeriod:    cfg.GracePeriod,
-		})
+		buckets[i] = bucket.New(bCfg)
 	}
 
 	s := &Store{
@@ -81,7 +82,6 @@ func (s *Store) getBucket(key string) *bucket.Bucket {
 }
 
 func (s *Store) startSweeper(ctx context.Context) {
-	// expiry sweeper
 	go func() {
 		sweepTicker := time.NewTicker(sweepDuration)
 		decayTicker := time.NewTicker(decayDuration)
@@ -94,8 +94,11 @@ func (s *Store) startSweeper(ctx context.Context) {
 				return
 			case <-sweepTicker.C:
 				now := time.Now().UnixNano()
+				var removed int64
 				for _, b := range s.buckets {
-					removed := b.SweepExpired(now)
+					removed += b.SweepExpired(now)
+				}
+				if removed > 0 {
 					s.stats.keyCount.Add(-removed)
 					s.stats.evictions.Add(removed)
 				}

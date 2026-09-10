@@ -3,17 +3,15 @@ package bucket
 import (
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"kivo/engine/internal/ttl/heap"
 )
 
 type Config struct {
-	MaxSize        int64
-	ThresholdRatio float64
-	TargetRatio    float64
+	ThresholdBytes int64
+	TargetBytes    int64
 	SampleSize     int
-	GracePeriod    time.Duration
+	GracePeriod    int64
 }
 
 type entry struct {
@@ -25,22 +23,25 @@ type entry struct {
 }
 
 type Bucket struct {
-	mu             sync.RWMutex
-	data           map[string]*entry
-	ttlHeap        *heap.Heap
-	cfg            Config
-	currentSize    int64
+	mu          sync.RWMutex
+	data        map[string]*entry
+	ttlHeap     *heap.Heap
+	currentSize int64
+
 	thresholdBytes int64
 	targetBytes    int64
+	sampleSize     int
+	gracePeriod    int64
 }
 
 func New(cfg Config) *Bucket {
 	return &Bucket{
 		data:           make(map[string]*entry),
 		ttlHeap:        heap.New(),
-		cfg:            cfg,
-		thresholdBytes: int64(float64(cfg.MaxSize) * cfg.ThresholdRatio),
-		targetBytes:    int64(float64(cfg.MaxSize) * cfg.TargetRatio),
+		thresholdBytes: cfg.ThresholdBytes,
+		targetBytes:    cfg.TargetBytes,
+		sampleSize:     cfg.SampleSize,
+		gracePeriod:    cfg.GracePeriod,
 	}
 }
 
