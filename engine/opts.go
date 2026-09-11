@@ -1,11 +1,11 @@
 package engine
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	"kivo/engine/internal/sysmem"
+	"kivo/engine/internal/validation"
 )
 
 const (
@@ -38,8 +38,8 @@ func (o *Opts) prepare() (internalOpts, error) {
 	if o == nil {
 		o = DefaultOpts()
 	}
-	if o.DefaultTTL < 0 {
-		return internalOpts{}, errors.New("default TTL cannot be negative")
+	if err := validation.CheckTTL(o.DefaultTTL); err != nil {
+		return internalOpts{}, fmt.Errorf("default TTL invalid: %w", err)
 	}
 
 	var limitBytes int64

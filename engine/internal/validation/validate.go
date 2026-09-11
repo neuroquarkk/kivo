@@ -3,12 +3,14 @@ package validation
 import (
 	"errors"
 	"strings"
+	"time"
 )
 
 var (
 	ErrEmptyKey      = errors.New("key is empty")
 	ErrKeyTooLarge   = errors.New("key is too large")
 	ErrValueTooLarge = errors.New("value is too large")
+	ErrNegativeTTL   = errors.New("ttl cannot be negative")
 )
 
 func CheckKey(key string, max int) error {
@@ -31,5 +33,12 @@ func CheckValue(value []byte, max int) error {
 		return ErrValueTooLarge
 	}
 
+	return nil
+}
+
+func CheckTTL(ttl time.Duration) error {
+	if ttl < 0 {
+		return ErrNegativeTTL
+	}
 	return nil
 }

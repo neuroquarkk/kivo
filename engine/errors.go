@@ -9,5 +9,6 @@ var (
 	ErrEmptyKey      = validation.ErrEmptyKey
 	ErrKeyTooLarge   = validation.ErrKeyTooLarge
 	ErrValueTooLarge = validation.ErrValueTooLarge
+	ErrNegativeTTL   = validation.ErrNegativeTTL
 	ErrNotFound      = bucket.ErrNotFound
 )

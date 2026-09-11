@@ -14,10 +14,6 @@ type Engine struct {
 }
 
 func New(ctx context.Context, opts *Opts) (*Engine, error) {
-	if opts == nil {
-		opts = &Opts{}
-	}
-
 	iOpts, err := opts.prepare()
 	if err != nil {
 		return nil, err
@@ -35,6 +31,9 @@ func (e *Engine) Set(key string, value []byte, ttl time.Duration) error {
 		return err
 	}
 	if err := validation.CheckValue(value, DefaultMaxValueSize); err != nil {
+		return err
+	}
+	if err := validation.CheckTTL(ttl); err != nil {
 		return err
 	}
 
