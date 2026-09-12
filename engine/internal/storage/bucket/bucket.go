@@ -1,16 +1,21 @@
 package bucket
 
 import (
+	"errors"
 	"sync"
 	"sync/atomic"
 
 	"kivo/engine/internal/ttl/heap"
 )
 
+var (
+	ErrNotFound    = errors.New("key not found")
+	ErrValueTooBig = errors.New("value too big for bucket")
+)
+
 type Config struct {
 	ThresholdBytes int64
 	TargetBytes    int64
-	SampleSize     int
 	GracePeriod    int64
 }
 
@@ -19,18 +24,18 @@ type entry struct {
 	expiresAt int64
 	item      *heap.Item
 	feq       atomic.Uint32
-	createdAt int64
 }
 
 type Bucket struct {
-	mu          sync.RWMutex
-	data        map[string]*entry
-	ttlHeap     *heap.Heap
-	currentSize int64
+	mu      sync.RWMutex
+	data    map[string]*entry
+	keys    []string
+	cursor  int
+	ttlHeap *heap.Heap
 
+	currentSize    int64
 	thresholdBytes int64
 	targetBytes    int64
-	sampleSize     int
 	gracePeriod    int64
 }
 
@@ -40,7 +45,6 @@ func New(cfg Config) *Bucket {
 		ttlHeap:        heap.New(),
 		thresholdBytes: cfg.ThresholdBytes,
 		targetBytes:    cfg.TargetBytes,
-		sampleSize:     cfg.SampleSize,
 		gracePeriod:    cfg.GracePeriod,
 	}
 }

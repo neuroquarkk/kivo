@@ -6,7 +6,9 @@ import (
 	"time"
 )
 
-func (b *Bucket) Set(key string, value []byte, ttl time.Duration) (bool, int) {
+func (b *Bucket) Set(
+	key string, value []byte, ttl time.Duration,
+) (bool, int, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -21,17 +23,31 @@ func (b *Bucket) Set(key string, value []byte, ttl time.Duration) (bool, int) {
 		delta = int64(len(value)) - int64(len(ent.value))
 	}
 
+	if entrySize(key, value) > b.targetBytes {
+		return false, 0, ErrValueTooBig
+	}
+
 	var removed int
 	if b.currentSize+delta >= b.thresholdBytes {
-		removed = b.evictKeys(key, delta, now)
+		var err error
+		removed, err = b.evictKeys(key, delta)
+		if err != nil {
+			return false, removed, err
+		}
 	}
 
 	if isNew {
-		ent = &entry{createdAt: now}
+		ent = &entry{}
 		b.data[key] = ent
+		b.keys = append(b.keys, key)
+		ent.feq.Store(5)
 	} else {
-		ent.feq.Store(0)
+		newScore := ent.feq.Add(1)
+		if newScore < 5 {
+			ent.feq.Store(5)
+		}
 	}
+
 	b.currentSize += delta
 
 	var expiresAt int64
@@ -55,7 +71,7 @@ func (b *Bucket) Set(key string, value []byte, ttl time.Duration) (bool, int) {
 	ent.value = bytes.Clone(value)
 	ent.expiresAt = expiresAt
 
-	return isNew, removed
+	return isNew, removed, nil
 }
 
 func (b *Bucket) Delete(key string) bool {

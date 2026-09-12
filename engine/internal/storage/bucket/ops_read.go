@@ -2,12 +2,7 @@ package bucket
 
 import (
 	"bytes"
-	"errors"
 	"time"
-)
-
-var (
-	ErrNotFound = errors.New("key not found")
 )
 
 func (b *Bucket) Get(key string) ([]byte, error) {

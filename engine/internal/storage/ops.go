@@ -2,10 +2,14 @@ package storage
 
 import "time"
 
-func (s *Store) Set(key string, value []byte, ttl time.Duration) {
+func (s *Store) Set(key string, value []byte, ttl time.Duration) error {
 	b := s.getBucket(key)
 
-	isNew, removed := b.Set(key, value, ttl)
+	isNew, removed, err := b.Set(key, value, ttl)
+	if err != nil {
+		return err
+	}
+
 	if isNew {
 		s.stats.keyCount.Add(1)
 	}
@@ -14,6 +18,8 @@ func (s *Store) Set(key string, value []byte, ttl time.Duration) {
 		s.stats.keyCount.Add(-int64(removed))
 		s.stats.evictions.Add(int64(removed))
 	}
+
+	return nil
 }
 
 func (s *Store) Delete(key string) {

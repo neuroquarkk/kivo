@@ -100,6 +100,8 @@ func printEngineErr(err error) {
 		fmt.Println("key must not be empty")
 	case errors.Is(err, engine.ErrNotFound):
 		fmt.Println("key not found")
+	case errors.Is(err, engine.ErrValueTooBig):
+		fmt.Println("value too large, try shorter value")
 	default:
 		fmt.Println("error:", err)
 	}

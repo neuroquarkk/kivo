@@ -41,8 +41,7 @@ func (e *Engine) Set(key string, value []byte, ttl time.Duration) error {
 		ttl = e.opts.defaultTTL
 	}
 
-	e.store.Set(key, value, ttl)
-	return nil
+	return e.store.Set(key, value, ttl)
 }
 
 func (e *Engine) Delete(key string) error {

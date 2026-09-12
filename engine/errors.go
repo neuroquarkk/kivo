@@ -11,4 +11,5 @@ var (
 	ErrValueTooLarge = validation.ErrValueTooLarge
 	ErrNegativeTTL   = validation.ErrNegativeTTL
 	ErrNotFound      = bucket.ErrNotFound
+	ErrValueTooBig   = bucket.ErrValueTooBig
 )

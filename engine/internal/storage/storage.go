@@ -12,12 +12,9 @@ import (
 const (
 	numBucket     = 256
 	sweepDuration = 1 * time.Minute
-	decayDuration = 10 * time.Minute
 
 	thresholdRatio = 0.99
 	targetRatio    = 0.95
-	sampleSize     = 5
-	gracePeriod    = 1500 * time.Millisecond
 )
 
 type StatsSnapshot struct {
@@ -53,8 +50,6 @@ func New(ctx context.Context, memLimit int64) *Store {
 	bCfg := bucket.Config{
 		ThresholdBytes: int64(float64(perBucketLimit) * thresholdRatio),
 		TargetBytes:    int64(float64(perBucketLimit) * targetRatio),
-		SampleSize:     sampleSize,
-		GracePeriod:    int64(gracePeriod),
 	}
 
 	buckets := make([]*bucket.Bucket, numBucket)
@@ -81,9 +76,7 @@ func (s *Store) getBucket(key string) *bucket.Bucket {
 func (s *Store) startSweeper(ctx context.Context) {
 	go func() {
 		sweepTicker := time.NewTicker(sweepDuration)
-		decayTicker := time.NewTicker(decayDuration)
 		defer sweepTicker.Stop()
-		defer decayTicker.Stop()
 
 		for {
 			select {
@@ -98,10 +91,6 @@ func (s *Store) startSweeper(ctx context.Context) {
 				if removed > 0 {
 					s.stats.keyCount.Add(-removed)
 					s.stats.evictions.Add(removed)
-				}
-			case <-decayTicker.C:
-				for _, b := range s.buckets {
-					b.Decay()
 				}
 			}
 		}

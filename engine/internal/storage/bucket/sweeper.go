@@ -1,11 +1,5 @@
 package bucket
 
-import "math"
-
-const (
-	decayFactor = 0.5
-)
-
 func (b *Bucket) SweepExpired(now int64) int64 {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -28,69 +22,61 @@ func (b *Bucket) SweepExpired(now int64) int64 {
 	return removed
 }
 
-func (b *Bucket) evictKeys(ignoreKey string, delta, now int64) int {
-	graceCutoff := now - int64(b.gracePeriod)
-	maxInspect := b.sampleSize * 5
-
+func (b *Bucket) evictKeys(ignoreKey string, delta int64) (int, error) {
 	var evictedCount int
+	startCursor := -1
+	progressed := false
 
 	for (b.currentSize + delta) > b.targetBytes {
-		var (
-			lowestKey string
-			lowestFeq uint32 = math.MaxUint32
-			sampled   int
-			visited   int
-		)
-
-		for key, ent := range b.data {
-			if key == ignoreKey {
-				continue
-			}
-
-			visited++
-			if visited > maxInspect {
-				break
-			}
-
-			if ent.createdAt > graceCutoff {
-				continue
-			}
-
-			if feq := ent.feq.Load(); feq < lowestFeq {
-				lowestFeq = feq
-				lowestKey = key
-			}
-
-			sampled++
-			if sampled >= b.sampleSize {
-				break
-			}
+		if len(b.keys) == 0 {
+			return evictedCount, ErrValueTooBig
 		}
 
-		if lowestKey == "" {
-			break
+		b.cursor = b.cursor % len(b.keys)
+		if b.cursor == startCursor && !progressed {
+			return evictedCount, ErrValueTooBig
+		}
+		if startCursor == -1 || b.cursor == startCursor {
+			startCursor = b.cursor
+			progressed = false
 		}
 
-		ent := b.data[lowestKey]
+		key := b.keys[b.cursor]
+		ent, exists := b.data[key]
+
+		if !exists {
+			lastIdx := len(b.keys) - 1
+			b.keys[b.cursor] = b.keys[lastIdx]
+			b.keys = b.keys[:lastIdx]
+			continue
+		}
+
+		if key == ignoreKey {
+			b.cursor++
+			continue
+		}
+
+		score := ent.feq.Load()
+		if score > 0 {
+			ent.feq.Store(score / 2)
+			progressed = true
+			b.cursor++
+			continue
+		}
+
+		b.currentSize -= entrySize(key, ent.value)
+		delete(b.data, key)
 		if ent.item != nil {
 			b.ttlHeap.Remove(ent.item)
 		}
-
-		delete(b.data, lowestKey)
-		b.currentSize -= entrySize(lowestKey, ent.value)
 		evictedCount++
+		progressed = true
+
+		lastIdx := len(b.keys) - 1
+		b.keys[b.cursor] = b.keys[lastIdx]
+		b.keys = b.keys[:lastIdx]
+		startCursor = -1
 	}
 
-	return evictedCount
-}
-
-func (b *Bucket) Decay() {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	for _, ent := range b.data {
-		feq := ent.feq.Load()
-		decayed := float64(feq) * decayFactor
-		ent.feq.Store(uint32(decayed))
-	}
+	return evictedCount, nil
 }
