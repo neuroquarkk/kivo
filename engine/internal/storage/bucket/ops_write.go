@@ -2,6 +2,7 @@ package bucket
 
 import (
 	"bytes"
+	"kivo/engine/internal/ttl/heap"
 	"time"
 )
 
@@ -73,4 +74,13 @@ func (b *Bucket) Delete(key string) bool {
 	delete(b.data, key)
 	b.currentSize -= entrySize(key, ent.value)
 	return true
+}
+
+func (b *Bucket) Flush() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	b.data = make(map[string]*entry)
+	b.ttlHeap = heap.New()
+	b.currentSize = 0
 }

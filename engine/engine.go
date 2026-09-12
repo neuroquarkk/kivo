@@ -54,6 +54,10 @@ func (e *Engine) Delete(key string) error {
 	return nil
 }
 
+func (e *Engine) Flush() {
+	e.store.Flush()
+}
+
 func (e *Engine) Get(key string) ([]byte, error) {
 	if err := validation.CheckKey(key, DefaultMaxKeySize); err != nil {
 		return nil, err

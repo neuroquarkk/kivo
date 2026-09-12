@@ -26,6 +26,13 @@ func (s *Store) Delete(key string) {
 	s.stats.deletes.Add(1)
 }
 
+func (s *Store) Flush() {
+	for _, b := range s.buckets {
+		b.Flush()
+	}
+	s.stats.keyCount.Store(0)
+}
+
 func (s *Store) Get(key string) ([]byte, error) {
 	b := s.getBucket(key)
 

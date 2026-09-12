@@ -100,3 +100,8 @@ func (r *REPL) cmdInfo() {
 		))
 	}
 }
+
+func (r *REPL) cmdFlush() {
+	r.engine.Flush()
+	fmt.Println("flushed all keys")
+}
