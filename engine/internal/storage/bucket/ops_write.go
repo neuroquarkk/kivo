@@ -39,6 +39,7 @@ func (b *Bucket) Set(
 	if isNew {
 		ent = &entry{}
 		b.data[key] = ent
+		ent.idx = len(b.keys)
 		b.keys = append(b.keys, key)
 		ent.feq.Store(5)
 	} else {
@@ -87,6 +88,7 @@ func (b *Bucket) Delete(key string) bool {
 		b.ttlHeap.Remove(ent.item)
 	}
 
+	b.removeKeysAt(ent.idx)
 	delete(b.data, key)
 	b.currentSize -= entrySize(key, ent.value)
 	return true
@@ -97,6 +99,19 @@ func (b *Bucket) Flush() {
 	defer b.mu.Unlock()
 
 	b.data = make(map[string]*entry)
+	b.keys = nil
+	b.cursor = 0
 	b.ttlHeap = heap.New()
 	b.currentSize = 0
+}
+
+func (b *Bucket) removeKeysAt(idx int) {
+	lastIdx := len(b.keys) - 1
+	movedKey := b.keys[lastIdx]
+	b.keys[idx] = movedKey
+	b.keys = b.keys[:lastIdx]
+
+	if idx != lastIdx {
+		b.data[movedKey].idx = idx
+	}
 }

@@ -27,7 +27,7 @@ func TestEviction(t *testing.T) {
 
 	// only key present, unevictable
 	b2 := New(Config{ThresholdBytes: 500, TargetBytes: 400})
-	b2.data["solo"] = &entry{value: make([]byte, 300)}
+	b2.data["solo"] = &entry{value: make([]byte, 300), idx: 0}
 	b2.keys = []string{"solo"}
 	b2.currentSize = 304
 

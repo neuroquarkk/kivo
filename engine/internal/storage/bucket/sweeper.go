@@ -15,6 +15,7 @@ func (b *Bucket) SweepExpired(now int64) int64 {
 
 		ent := b.data[item.Key]
 		b.currentSize -= entrySize(item.Key, ent.value)
+		b.removeKeysAt(ent.idx)
 		delete(b.data, item.Key)
 		removed++
 	}
@@ -42,14 +43,7 @@ func (b *Bucket) evictKeys(ignoreKey string, delta int64) (int, error) {
 		}
 
 		key := b.keys[b.cursor]
-		ent, exists := b.data[key]
-
-		if !exists {
-			lastIdx := len(b.keys) - 1
-			b.keys[b.cursor] = b.keys[lastIdx]
-			b.keys = b.keys[:lastIdx]
-			continue
-		}
+		ent := b.data[key]
 
 		if key == ignoreKey {
 			b.cursor++
@@ -69,12 +63,10 @@ func (b *Bucket) evictKeys(ignoreKey string, delta int64) (int, error) {
 		if ent.item != nil {
 			b.ttlHeap.Remove(ent.item)
 		}
+
+		b.removeKeysAt(b.cursor)
 		evictedCount++
 		progressed = true
-
-		lastIdx := len(b.keys) - 1
-		b.keys[b.cursor] = b.keys[lastIdx]
-		b.keys = b.keys[:lastIdx]
 		startCursor = -1
 	}
 

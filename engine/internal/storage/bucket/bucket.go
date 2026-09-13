@@ -24,6 +24,7 @@ type entry struct {
 	expiresAt int64
 	item      *heap.Item
 	feq       atomic.Uint32
+	idx       int
 }
 
 type Bucket struct {
