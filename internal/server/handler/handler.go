@@ -56,6 +56,22 @@ func (h *Handler) Put(w http.ResponseWriter, r *http.Request) {
 	sendResponse(w, http.StatusCreated, nil)
 }
 
+func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	key := r.PathValue("key")
+	if err := validateKey(key); err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := h.eng.Delete(key); err != nil {
+		code, msg := parseEngineError(err)
+		sendError(w, code, msg)
+		return
+	}
+
+	sendResponse(w, http.StatusNoContent, nil)
+}
+
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	key := r.PathValue("key")
 	if err := validateKey(key); err != nil {
@@ -74,4 +90,29 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		"key":   key,
 		"value": string(value),
 	})
+}
+
+func (h *Handler) Exists(w http.ResponseWriter, r *http.Request) {
+	key := r.PathValue("key")
+	if err := validateKey(key); err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	exists, err := h.eng.Exists(key)
+	if err != nil {
+		code, msg := parseEngineError(err)
+		sendError(w, code, msg)
+		return
+	}
+
+	sendResponse(w, http.StatusOK, map[string]any{
+		"key":    key,
+		"exists": exists,
+	})
+}
+
+func (h *Handler) Info(w http.ResponseWriter, r *http.Request) {
+	info := h.eng.Info()
+	sendResponse(w, http.StatusOK, info)
 }

@@ -10,7 +10,10 @@ import (
 )
 
 func sendResponse(w http.ResponseWriter, code int, data any) {
-	w.Header().Set("Content-Type", "application/json")
+	if data != nil {
+		w.Header().Set("Content-Type", "application/json")
+	}
+
 	w.WriteHeader(code)
 	if data != nil {
 		json.NewEncoder(w).Encode(data)
@@ -35,6 +38,10 @@ func validateKey(key string) error {
 }
 
 func validateValue(value string) error {
+	if len(value) == 0 {
+		return fmt.Errorf("value cannot be empty")
+	}
+
 	if len(value) > engine.DefaultMaxValueSize {
 		return fmt.Errorf("value exceeds maximum length of %d bytes",
 			engine.DefaultMaxValueSize)
