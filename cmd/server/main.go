@@ -25,6 +25,7 @@ func main() {
 	hdl := handler.New(eng)
 	mux.HandleFunc("GET /ping", hdl.Ping)
 	mux.HandleFunc("PUT /kv/{key}", hdl.Put)
+	mux.HandleFunc("GET /kv/{key}", hdl.Get)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.PORT,

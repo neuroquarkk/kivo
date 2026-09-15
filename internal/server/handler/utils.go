@@ -4,14 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"kivo/engine"
 )
 
-func sendResponse(w http.ResponseWriter, code int, data map[string]string) {
+func sendResponse(w http.ResponseWriter, code int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(data)
+	if data != nil {
+		json.NewEncoder(w).Encode(data)
+	}
 }
 
 func sendError(w http.ResponseWriter, code int, msg string) {
@@ -32,12 +35,33 @@ func validateKey(key string) error {
 }
 
 func validateValue(value string) error {
-	if value == "" {
-		return fmt.Errorf("value cannot be empty")
-	}
 	if len(value) > engine.DefaultMaxValueSize {
 		return fmt.Errorf("value exceeds maximum length of %d bytes",
 			engine.DefaultMaxValueSize)
 	}
 	return nil
+}
+
+func validateTTL(ttl time.Duration) error {
+	if ttl < 0 {
+		return fmt.Errorf("TTL cannot be negative")
+	}
+	return nil
+}
+
+func parseEngineError(err error) (int, string) {
+	switch err {
+	case engine.ErrNotFound:
+		return http.StatusNotFound, "key not found"
+	case engine.ErrEmptyKey:
+		return http.StatusBadRequest, "key cannot be empty"
+	case engine.ErrKeyTooLarge:
+		return http.StatusBadRequest, "key exceeds maximum bytes"
+	case engine.ErrValueTooLarge, engine.ErrValueTooBig:
+		return http.StatusBadRequest, "value exceeds maximum bytes"
+	case engine.ErrNegativeTTL:
+		return http.StatusBadRequest, "TTL cannot be negative"
+	default:
+		return http.StatusInternalServerError, "internal server error"
+	}
 }
