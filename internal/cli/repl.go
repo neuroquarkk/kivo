@@ -63,6 +63,12 @@ func (r *REPL) dispatch(line string) (exit bool) {
 		r.cmdDelete(rest)
 	case "EXISTS":
 		r.cmdExists(rest)
+	case "TTL":
+		r.cmdTTL(rest)
+	case "EXPIRE":
+		r.cmdExpire(rest)
+	case "PERSIST":
+		r.cmdPersist(rest)
 	case "COUNT":
 		r.cmdCount()
 	case "INFO":
@@ -84,14 +90,16 @@ func printHelp() {
 	fmt.Println(`commands:
   SET <key> <value> [ttl]   store a value, optional TTL (30s, 5m, 1h)
   GET <key>                 retrieve a value
-  DELETE <key>           	remove a key
+  DELETE <key>              remove a key
   EXISTS <key>              check whether a key exists
+  TTL <key>                 get remaining time-to-live for a key
+  EXPIRE <key> <ttl>        update the expiration of a key
+  PERSIST <key>             remove the expiration of a key
   COUNT                     get the total number of keys
   INFO                      show store statistics (keys, hits, misses, etc)
   FLUSH                     remove all keys from the store
   HELP                      show this message
-  EXIT|QUIT                 leave the REPL`,
-	)
+  EXIT|QUIT                 leave the REPL`)
 }
 
 func printEngineErr(err error) {

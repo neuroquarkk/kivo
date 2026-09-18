@@ -34,3 +34,7 @@ type PutReq struct {
 	Value string   `json:"value"`
 	TTL   Duration `json:"ttl"`
 }
+
+type ExpireReq struct {
+	TTL   Duration `json:"ttl"`
+}

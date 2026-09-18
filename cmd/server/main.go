@@ -39,6 +39,10 @@ func main() {
 	mux.HandleFunc("GET /kv/{key}/exists", hdl.Exists)
 	mux.HandleFunc("GET /stats", hdl.Info)
 
+	mux.HandleFunc("GET /key/{key}/ttl", hdl.TTL)
+	mux.HandleFunc("PUT /key/{key}/expire", hdl.Expire)
+	mux.HandleFunc("PUT /key/{key}/persist", hdl.Persist)
+
 	srv := &http.Server{
 		Addr:    ":" + cfg.PORT,
 		Handler: middleware.Logger(mux),

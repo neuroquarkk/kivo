@@ -116,3 +116,69 @@ func (h *Handler) Info(w http.ResponseWriter, r *http.Request) {
 	info := h.eng.Info()
 	sendResponse(w, http.StatusOK, info)
 }
+
+func (h *Handler) TTL(w http.ResponseWriter, r *http.Request) {
+	key := r.PathValue("key")
+	if err := validateKey(key); err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	remaining, hasTTL, err := h.eng.TTL(key)
+	if err != nil {
+		code, msg := parseEngineError(err)
+		sendError(w, code, msg)
+		return
+	}
+
+	sendResponse(w, http.StatusOK, map[string]any{
+		"key":       key,
+		"has_ttl":   hasTTL,
+		"ttl_ms":    remaining.Milliseconds(),
+		"ttl_human": remaining.String(),
+	})
+}
+
+func (h *Handler) Expire(w http.ResponseWriter, r *http.Request) {
+	key := r.PathValue("key")
+	if err := validateKey(key); err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	var body ExpireReq
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sendError(w, http.StatusBadRequest, "invalid body")
+		return
+	}
+
+	if err := validateTTL(time.Duration(body.TTL)); err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := h.eng.Expire(key, time.Duration(body.TTL)); err != nil {
+		code, msg := parseEngineError(err)
+		sendError(w, code, msg)
+		return
+	}
+
+	sendResponse(w, http.StatusOK, nil)
+}
+
+func (h *Handler) Persist(w http.ResponseWriter, r *http.Request) {
+	key := r.PathValue("key")
+	if err := validateKey(key); err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := h.eng.Persist(key); err != nil {
+		code, msg := parseEngineError(err)
+		sendError(w, code, msg)
+		return
+	}
+
+	sendResponse(w, http.StatusOK, nil)
+}

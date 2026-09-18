@@ -105,3 +105,55 @@ func (r *REPL) cmdFlush() {
 	r.engine.Flush()
 	fmt.Println("flushed all keys")
 }
+
+func (r *REPL) cmdTTL(args []string) {
+	if len(args) != 1 {
+		fmt.Println("usage: TTL <key>")
+		return
+	}
+
+	remaining, hasTTL, err := r.engine.TTL(args[0])
+	if err != nil {
+		printEngineErr(err)
+		return
+	}
+
+	if !hasTTL {
+		fmt.Println("permanent")
+		return
+	}
+
+	fmt.Println(remaining.Round(time.Second).String())
+}
+
+func (r *REPL) cmdExpire(args []string) {
+	if len(args) != 2 {
+		fmt.Println("usage: EXPIRE <key> <ttl>")
+		return
+	}
+
+	parsed, err := time.ParseDuration(args[1])
+	if err != nil {
+		fmt.Printf("invalid ttl %s: %v\n", args[1], err)
+		return
+	}
+
+	if err := r.engine.Expire(args[0], parsed); err != nil {
+		printEngineErr(err)
+		return
+	}
+	fmt.Println("OK")
+}
+
+func (r *REPL) cmdPersist(args []string) {
+	if len(args) != 1 {
+		fmt.Println("usage: PERSIST <key>")
+		return
+	}
+
+	if err := r.engine.Persist(args[0]); err != nil {
+		printEngineErr(err)
+		return
+	}
+	fmt.Println("OK")
+}
