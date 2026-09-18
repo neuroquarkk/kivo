@@ -72,3 +72,14 @@ func parseEngineError(err error) (int, string) {
 		return http.StatusInternalServerError, "internal server error"
 	}
 }
+
+func parseTTL(ttl string) (time.Duration, error) {
+	if ttl == "" {
+		return 0, nil
+	}
+	parsed, err := time.ParseDuration(ttl)
+	if err != nil {
+		return 0, fmt.Errorf("ttl must be a duration string")
+	}
+	return parsed, nil
+}

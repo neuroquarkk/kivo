@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"kivo/engine"
 )
@@ -39,15 +38,18 @@ func (h *Handler) Put(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validateTTL(time.Duration(body.TTL)); err != nil {
+	ttl, err := parseTTL(body.TTL)
+	if err != nil {
 		sendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if err := h.eng.Set(
-		key, []byte(body.Value),
-		time.Duration(body.TTL),
-	); err != nil {
+	if err := validateTTL(ttl); err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := h.eng.Set(key, []byte(body.Value), ttl); err != nil {
 		code, msg := parseEngineError(err)
 		sendError(w, code, msg)
 		return
@@ -153,12 +155,18 @@ func (h *Handler) Expire(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validateTTL(time.Duration(body.TTL)); err != nil {
+	ttl, err := parseTTL(body.TTL)
+	if err != nil {
 		sendError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	if err := h.eng.Expire(key, time.Duration(body.TTL)); err != nil {
+	if err := validateTTL(ttl); err != nil {
+		sendError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := h.eng.Expire(key, ttl); err != nil {
 		code, msg := parseEngineError(err)
 		sendError(w, code, msg)
 		return

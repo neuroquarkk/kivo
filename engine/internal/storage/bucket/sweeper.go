@@ -34,6 +34,7 @@ func (b *Bucket) evictKeys(ignoreKey string, delta int64) (int, error) {
 		}
 
 		b.cursor = b.cursor % len(b.keys)
+		// completed a lap with nothing evicted and no score decayed either
 		if b.cursor == startCursor && !progressed {
 			return evictedCount, ErrValueTooBig
 		}
@@ -58,6 +59,10 @@ func (b *Bucket) evictKeys(ignoreKey string, delta int64) (int, error) {
 			continue
 		}
 
+		// score == 0: evict
+		// removeKeysAt swaps the last key into this slot
+		// so the cursor is left pointing at the next key to
+		// consider without incrementing
 		b.currentSize -= entrySize(key, ent.value)
 		delete(b.data, key)
 		if ent.item != nil {

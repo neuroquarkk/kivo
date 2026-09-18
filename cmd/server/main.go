@@ -16,7 +16,7 @@ import (
 func main() {
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
-		syscall.SIGTERM, syscall.SIGABRT,
+		syscall.SIGTERM, syscall.SIGINT,
 	)
 	defer stop()
 
