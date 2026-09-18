@@ -21,7 +21,7 @@ func Logger(next http.Handler) http.Handler {
 		start := time.Now()
 
 		rw := &responseWrite{ResponseWriter: w, code: http.StatusOK}
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(rw, r)
 		duration := time.Since(start)
 
 		log.Printf("[LOG] %3d | %10v | %-5s | %s\n",

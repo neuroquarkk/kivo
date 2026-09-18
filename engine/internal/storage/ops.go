@@ -81,3 +81,18 @@ func (s *Store) Info() StatsSnapshot {
 		MemPerBucket: s.memLimit / int64(len(s.buckets)),
 	}
 }
+
+func (s *Store) TTL(key string) (time.Duration, bool, error) {
+	b := s.getBucket(key)
+	return b.TTL(key)
+}
+
+func (s *Store) Expire(key string, ttl time.Duration) error {
+	b := s.getBucket(key)
+	return b.Expire(key, ttl)
+}
+
+func (s *Store) Persist(key string) error {
+	b := s.getBucket(key)
+	return b.Persist(key)
+}

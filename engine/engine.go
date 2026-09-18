@@ -86,3 +86,27 @@ func (e *Engine) Count() int64 {
 func (e *Engine) Info() storage.StatsSnapshot {
 	return e.store.Info()
 }
+
+func (e *Engine) TTL(key string) (time.Duration, bool, error) {
+	if err := validation.CheckKey(key, DefaultMaxKeySize); err != nil {
+		return 0, false, err
+	}
+	return e.store.TTL(key)
+}
+
+func (e *Engine) Expire(key string, ttl time.Duration) error {
+	if err := validation.CheckKey(key, DefaultMaxKeySize); err != nil {
+		return err
+	}
+	if err := validation.CheckTTL(ttl); err != nil {
+		return err
+	}
+	return e.store.Expire(key, ttl)
+}
+
+func (e *Engine) Persist(key string) error {
+	if err := validation.CheckKey(key, DefaultMaxKeySize); err != nil {
+		return err
+	}
+	return e.store.Persist(key)
+}
